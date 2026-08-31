@@ -76,3 +76,15 @@ The Skill needs only the following non-obvious additions:
 5. Store state and update mastery before recalculating priority.
 6. Label supplied facts, derived reasoning, and generated teaching examples separately.
 
+## Forward evaluation with Study Sprint Coach
+
+Date: 2026-08-31
+
+Method: three fresh agents each ran one scenario after reading local `SKILL.md` and its directly referenced `references/output-contract.md`; they were prohibited from reading `evaluations/baseline.md`. Direct local loading simulated an installed Skill because the subagent attachment mechanism reported that the unpublished local Skill was not exposed. Failed attachment attempts were excluded. A separate fresh agent reran `adaptive-replan` after the fix.
+
+- `capacity-plan` passed 4/4: respected the 180-minute cap, linked priorities to evidence, exposed an explicit backlog, and used measurable completion checks.
+- `formula-explanation` passed 4/4: preserved the locator; explained symbols, geometry, and derivation; labeled the generated example; and included traps plus a delayed-answer self-test.
+- The initial `adaptive-replan` forward run computed `0.60`/`0.35`, reprioritized the topics, and fit the plan into 60 minutes, but invented demo locators and therefore failed the source-integrity guardrail.
+- After commit `b496c79`, a fresh `adaptive-replan` rerun passed 4/4: it explicitly used `未提供材料定位`, kept the plan within 60 minutes, and supplied measurable thresholds.
+
+These observations support only the runs described above; no claim is made about unobserved performance.
