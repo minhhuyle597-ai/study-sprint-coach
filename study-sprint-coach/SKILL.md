@@ -11,7 +11,8 @@ Create a traceable, capacity-safe learning sprint from supplied materials. Prese
 
 - Keep materials local by default. Ask for explicit approval before any cloud upload or cloud-model use.
 - Extract sources with page, slide, heading, or question locators. Show unreadable/unsupported extraction failures and source conflicts; never invent support or silently reconcile a conflict.
-- Build the topic matrix and diagnostic assessment from evidence. Every planned topic needs at least one locator and a measurable mastery check.
+- Build the topic matrix and diagnostic assessment from evidence. Evidence-backed plan topics require at least one locator from the current learner's supplied materials or persisted state, plus a measurable mastery check.
+- If the learner requests an immediate plan or replan without a locator, provide only a clearly labeled provisional plan: use the output contract's exact missing-material-locator label, lower evidence confidence, request the missing locator, and never fabricate one.
 - Calculate capacity through the deadline, make the plan feasible, and show every excluded item as backlog.
 - Do not assist with live or proctored assessments.
 - State OpenVINO, GPU, or NPU capability only when it appears in actual `python scripts/openvino_probe.py` output.

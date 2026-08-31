@@ -82,9 +82,37 @@ Date: 2026-08-31
 
 Method: three fresh agents each ran one scenario after reading local `SKILL.md` and its directly referenced `references/output-contract.md`; they were prohibited from reading `evaluations/baseline.md`. Direct local loading simulated an installed Skill because the subagent attachment mechanism reported that the unpublished local Skill was not exposed. Failed attachment attempts were excluded. A separate fresh agent reran `adaptive-replan` after the fix.
 
-- `capacity-plan` passed 4/4: respected the 180-minute cap, linked priorities to evidence, exposed an explicit backlog, and used measurable completion checks.
-- `formula-explanation` passed 4/4: preserved the locator; explained symbols, geometry, and derivation; labeled the generated example; and included traps plus a delayed-answer self-test.
-- The initial `adaptive-replan` forward run computed `0.60`/`0.35`, reprioritized the topics, and fit the plan into 60 minutes, but invented demo locators and therefore failed the source-integrity guardrail.
-- After commit `b496c79`, a fresh `adaptive-replan` rerun passed 4/4: it explicitly used `未提供材料定位`, kept the plan within 60 minutes, and supplied measurable thresholds.
+Full transcripts were not stored. The audit below is limited to the recorded excerpts and counts, not transcript-level verification.
+
+### `capacity-plan` — passed 4/4
+
+| Criterion | Recorded observation | Result |
+|---|---|---|
+| Capacity | Scheduled `180/180` minutes. | Pass |
+| Evidence-linked priority | Priority used the supplied syllabus, past-exam, and diagnostic evidence; all `8/8` time blocks had source fields. | Pass |
+| Explicit backlog | Backlog was itemized with an explicit `200-minute` breakdown. | Pass |
+| Measurable checks | All `8/8` time blocks had observable completion checks. | Pass |
+
+### `formula-explanation` — passed 4/4
+
+| Criterion | Recorded observation | Result |
+|---|---|---|
+| Preserve supplied locator | Retained `课程PPT，第18页`. | Pass |
+| Explain the formula | Covered symbols, geometry, derivation, and dimensions. | Pass |
+| Complete teaching slots | Labeled the worked example `生成示例`, listed exactly `4` traps, and withheld the self-test answer until submission. | Pass |
+| Evidence boundaries | Separated `材料事实`, `推导`, and `生成示例`. | Pass |
+
+### `adaptive-replan` — initial failure, then passed 4/4
+
+The initial forward run computed `0.60`/`0.35`, reversed priority, and fit 60 minutes, but inserted demo filenames `lecture-notes.md` and `past-exam.md`; it therefore failed the source-integrity guardrail. Commit `b496c79` added the locator-provenance fix, and a fresh rerun produced the observations below.
+
+| Criterion | Recorded observation | Result |
+|---|---|---|
+| Update mastery | Showed `(0.2×5 + 1.0×5) / 10 = 0.60` for derivatives and `(0.5×5 + 0.2×5) / 10 = 0.35` for integrals. | Pass |
+| Reprioritize | Reversed the order from derivatives-first to integrals-first. | Pass |
+| Fit capacity with checks | Used exactly `5` blocks totaling `60` minutes and supplied measurable thresholds. | Pass |
+| Feed the next loop | Specified that a result `<4/5` triggers another recorded update and replan. | Pass |
+
+Additional guardrail observation: the rerun used `未提供材料定位` and no fabricated filename.
 
 These observations support only the runs described above; no claim is made about unobserved performance.
