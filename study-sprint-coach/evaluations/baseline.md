@@ -97,10 +97,10 @@ Full transcripts were not stored. The audit below is limited to the recorded exc
 
 | Criterion | Recorded observation | Result |
 |---|---|---|
-| Preserve supplied locator | Retained `课程PPT，第18页`. | Pass |
-| Explain the formula | Covered symbols, geometry, derivation, and dimensions. | Pass |
-| Complete teaching slots | Labeled the worked example `生成示例`, listed exactly `4` traps, and withheld the self-test answer until submission. | Pass |
-| Evidence boundaries | Separated `材料事实`, `推导`, and `生成示例`. | Pass |
+| Conclusion and locator | Recorded the one-sentence conclusion `在约束曲线 g(x,y)=0 上达到极值时，f 的梯度与 g 的梯度共线：∇f=λ∇g` and preserved `课程PPT，第18页`. | Pass |
+| Explanation and example | Explained symbols and dimensions; included the diagram/geometry, fence analogy, relationship derivation, and a complete `生成示例`: `f=x+y` on the unit circle, with extrema `±√2`. | Pass |
+| Traps and self-test | Listed exactly `4` traps and withheld the self-test answer until the learner submitted an answer. | Pass |
+| Evidence boundaries | Introduced no unsupported course/exam-frequency or score claim. The only `材料事实` was the supplied formula; `推导` and `生成示例` were labeled separately. | Pass |
 
 ### `adaptive-replan` — initial failure, then passed 4/4
 
