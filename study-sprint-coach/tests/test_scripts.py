@@ -135,6 +135,41 @@ class StudySprintCliTests(unittest.TestCase):
             self.assertNotEqual(result.returncode, 0)
             self.assertEqual(state.read_bytes(), before)
 
+    def test_plan_rejects_non_finite_topic_numbers_without_changing_state(self):
+        topic_json = """[{
+            "id": "A",
+            "name": "A",
+            "relevance": RELEVANCE,
+            "mastery": 0.2,
+            "mastery_attempts": 5,
+            "score_gain": SCORE_GAIN,
+            "minutes": 60,
+            "remaining_minutes": 60,
+            "evidence": [{"source": "past-exam.md", "locator": "2024 Q2"}],
+            "mastery_check": "5题至少4题正确"
+        }]"""
+        payloads = (
+            topic_json.replace("RELEVANCE", "NaN").replace("SCORE_GAIN", "20.0"),
+            topic_json.replace("RELEVANCE", "1.0").replace("SCORE_GAIN", "Infinity"),
+        )
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            state = root / "state.json"
+            topic_file = root / "topics.json"
+            for payload in payloads:
+                with self.subTest(payload=payload):
+                    self.write_state(state, deadline="2026-09-01")
+                    before = state.read_bytes()
+                    topic_file.write_text(payload, encoding="utf-8")
+
+                    result = self.run_cli(
+                        "plan", "--state", str(state), "--topics", str(topic_file),
+                        "--as-of", "2026-09-01",
+                    )
+
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertEqual(state.read_bytes(), before)
+
     def test_record_updates_mastery_and_changes_visible_plan_order(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

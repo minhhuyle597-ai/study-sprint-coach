@@ -2,6 +2,7 @@ import argparse
 import datetime as dt
 import hashlib
 import json
+import math
 import os
 import tempfile
 from pathlib import Path
@@ -108,6 +109,8 @@ def number(value, label, minimum=None, maximum=None):
     if isinstance(value, bool) or not isinstance(value, (int, float)):
         raise ValueError(f"{label} must be a number")
     value = float(value)
+    if not math.isfinite(value):
+        raise ValueError(f"{label} must be finite")
     if (minimum is not None and value < minimum) or (maximum is not None and value > maximum):
         raise ValueError(f"{label} is out of range")
     return value
