@@ -22,18 +22,25 @@ class StudySprintCliTests(unittest.TestCase):
             check=False,
         )
 
-    def write_state(self, path, deadline="2026-09-07", minutes_per_day=90, topics=None):
+    def write_state(self, path, deadline="2026-09-07", minutes_per_day=90, topics=None, **overrides):
         state = {
             "version": 1,
             "mode": "exam",
             "deadline": deadline,
             "minutes_per_day": minutes_per_day,
             "target_score": 85.0,
-            "sources": [],
-            "topics": topics or [],
+            "sources": [{
+                "path": "past-exam.md",
+                "kind": "md",
+                "size": 1,
+                "sha256": "0" * 64,
+                "status": "ready",
+            }],
+            "topics": topics if topics is not None else [],
             "sessions": [],
             "plan": {"as_of": None, "schedule": [], "backlog": []},
         }
+        state.update(overrides)
         path.write_text(json.dumps(state), encoding="utf-8")
 
     def topic(self, topic_id, name, relevance, mastery, score_gain, minutes, **extra):
@@ -173,6 +180,87 @@ class StudySprintCliTests(unittest.TestCase):
                     self.assertNotEqual(result.returncode, 0)
                     self.assertEqual(state.read_bytes(), before)
 
+    def test_plan_requires_evidence_source_to_be_ready_manifest_path(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            state = root / "state.json"
+            topic_file = root / "topics.json"
+            cases = (
+                ([], "past-exam.md"),
+                ([{"path": "other.md", "kind": "md", "size": 1, "sha256": "0" * 64, "status": "ready"}], "past-exam.md"),
+                ([{"path": "past-exam.md", "kind": "pdf", "size": 1, "sha256": "0" * 64, "status": "needs_extraction"}], "past-exam.md"),
+                ([{"path": "past-exam.md", "kind": "bin", "size": 1, "sha256": "0" * 64, "status": "unsupported"}], "past-exam.md"),
+            )
+            for sources, evidence_source in cases:
+                with self.subTest(sources=sources):
+                    self.write_state(state, deadline="2026-09-01", sources=sources)
+                    before = state.read_bytes()
+                    topic_file.write_text(json.dumps([
+                        self.topic("A", "A", 1.0, 0.2, 20.0, 60,
+                                   evidence=[{"source": evidence_source, "locator": "2024 Q2"}]),
+                    ]), encoding="utf-8")
+
+                    result = self.run_cli(
+                        "plan", "--state", str(state), "--topics", str(topic_file),
+                        "--as-of", "2026-09-01",
+                    )
+
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertEqual(state.read_bytes(), before)
+
+    def test_plan_rejects_invalid_state_schema_without_changing_state(self):
+        invalid_overrides = (
+            {"version": 2},
+            {"mode": ""},
+            {"minutes_per_day": True},
+            {"target_score": float("nan")},
+            {"sources": {}},
+            {"sources": [{"path": "past-exam.md", "kind": "md", "size": 1,
+                          "sha256": "0" * 64, "status": []}]},
+            {"topics": {}},
+            {"sessions": {}},
+            {"plan": []},
+        )
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            state = root / "state.json"
+            topic_file = root / "topics.json"
+            topic_file.write_text(json.dumps([
+                self.topic("A", "A", 1.0, 0.2, 20.0, 60),
+            ]), encoding="utf-8")
+            for override in invalid_overrides:
+                with self.subTest(override=override):
+                    self.write_state(state, **override)
+                    before = state.read_bytes()
+
+                    result = self.run_cli(
+                        "plan", "--state", str(state), "--topics", str(topic_file),
+                        "--as-of", "2026-09-01",
+                    )
+
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertNotIn("Traceback", result.stderr)
+                    self.assertEqual(state.read_bytes(), before)
+
+    def test_plan_after_deadline_leaves_existing_state_unchanged(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            state = root / "state.json"
+            topic_file = root / "topics.json"
+            self.write_state(state, deadline="2026-09-01")
+            before = state.read_bytes()
+            topic_file.write_text(json.dumps([
+                self.topic("A", "A", 1.0, 0.2, 20.0, 60),
+            ]), encoding="utf-8")
+
+            result = self.run_cli(
+                "plan", "--state", str(state), "--topics", str(topic_file),
+                "--as-of", "2026-09-02",
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertEqual(state.read_bytes(), before)
+
     def test_record_updates_mastery_and_changes_visible_plan_order(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -221,6 +309,38 @@ class StudySprintCliTests(unittest.TestCase):
                 self.assertNotEqual(result.returncode, 0)
                 self.assertEqual(state.read_bytes(), before)
 
+    def test_record_validates_state_provenance_and_deadline_without_changing_state(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            state = root / "state.json"
+            results = root / "results.json"
+            results.write_text(json.dumps({
+                "date": "2026-09-01",
+                "items": [{"topic_id": "A", "correct": 1, "total": 1, "minutes_spent": 0}],
+            }), encoding="utf-8")
+            cases = (
+                ({"version": 2}, "2026-09-01"),
+                ({"sources": []}, "2026-09-01"),
+                ({}, "2026-09-02"),
+            )
+            for overrides, as_of in cases:
+                with self.subTest(overrides=overrides, as_of=as_of):
+                    self.write_state(
+                        state,
+                        deadline="2026-09-01",
+                        topics=[self.topic("A", "A", 1.0, 0.2, 20.0, 60)],
+                        **overrides,
+                    )
+                    before = state.read_bytes()
+
+                    result = self.run_cli(
+                        "record", "--state", str(state), "--results", str(results),
+                        "--as-of", as_of,
+                    )
+
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertEqual(state.read_bytes(), before)
+
 
 class OpenVinoProbeTests(unittest.TestCase):
     def load_probe(self):
@@ -265,6 +385,18 @@ class OpenVinoProbeTests(unittest.TestCase):
 
         self.assertFalse(result["available"])
         self.assertEqual(result["error"], "RuntimeError: plugin discovery failed")
+
+    def test_probe_subprocess_always_returns_utf8_json(self):
+        result = subprocess.run(
+            [sys.executable, str(OPENVINO_PROBE)],
+            capture_output=True,
+            check=False,
+        )
+
+        self.assertEqual(result.returncode, 0, result.stderr.decode("utf-8", errors="replace"))
+        payload = json.loads(result.stdout.decode("utf-8"))
+        self.assertIs(type(payload.get("available")), bool)
+        self.assertTrue(payload.get("source"))
 
 
 if __name__ == "__main__":

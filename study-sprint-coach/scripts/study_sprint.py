@@ -5,11 +5,12 @@ import json
 import math
 import os
 import tempfile
-from pathlib import Path
+from pathlib import Path, PurePosixPath, PureWindowsPath
 
 
 READY_KINDS = {"md", "txt", "csv", "json"}
 EXTRACTION_KINDS = {"pdf", "pptx", "docx", "xlsx", "xls"}
+SOURCE_STATUSES = {"ready", "needs_extraction", "unsupported"}
 
 
 def parse_date(value):
@@ -122,7 +123,37 @@ def nonempty_string(value, label):
     return value
 
 
-def validate_topics(payload):
+def validate_sources(payload):
+    if not isinstance(payload, list):
+        raise ValueError("state sources must be a list")
+    sources, paths = [], set()
+    required = {"path", "kind", "size", "sha256", "status"}
+    for index, candidate in enumerate(payload):
+        label = f"state source {index}"
+        if not isinstance(candidate, dict) or not required <= candidate.keys():
+            raise ValueError(f"{label} is missing required fields")
+        source = dict(candidate)
+        path = nonempty_string(source["path"], f"{label} path")
+        posix_path = PurePosixPath(path)
+        if (path != posix_path.as_posix() or posix_path.is_absolute()
+                or PureWindowsPath(path).is_absolute() or ".." in posix_path.parts):
+            raise ValueError(f"{label} path must be a normalized relative path")
+        if path in paths:
+            raise ValueError(f"duplicate state source path: {path}")
+        paths.add(path)
+        nonempty_string(source["kind"], f"{label} kind")
+        integer(source["size"], f"{label} size", 0)
+        digest = nonempty_string(source["sha256"], f"{label} sha256")
+        if len(digest) != 64 or any(character not in "0123456789abcdefABCDEF" for character in digest):
+            raise ValueError(f"{label} sha256 must be a 64-character hexadecimal digest")
+        status = nonempty_string(source["status"], f"{label} status")
+        if status not in SOURCE_STATUSES:
+            raise ValueError(f"{label} status is invalid")
+        sources.append(source)
+    return sources
+
+
+def validate_topics(payload, ready_sources):
     if not isinstance(payload, list):
         raise ValueError("topics must be a JSON list")
     identifiers, names, topics = set(), set(), []
@@ -156,7 +187,9 @@ def validate_topics(payload):
         for evidence_index, entry in enumerate(evidence):
             if not isinstance(entry, dict):
                 raise ValueError(f"{label} evidence {evidence_index} must be an object")
-            nonempty_string(entry.get("source"), f"{label} evidence source")
+            source = nonempty_string(entry.get("source"), f"{label} evidence source")
+            if source not in ready_sources:
+                raise ValueError(f"{label} evidence source is not ready in state sources: {source}")
             nonempty_string(entry.get("locator"), f"{label} evidence locator")
         nonempty_string(topic["mastery_check"], f"{label} mastery_check")
         topic["priority"] = (
@@ -164,6 +197,34 @@ def validate_topics(payload):
         )
         topics.append(topic)
     return sorted(topics, key=lambda topic: (-topic["priority"], topic["id"]))
+
+
+def validate_state(state, as_of):
+    if not isinstance(state, dict):
+        raise ValueError("state must be a JSON object")
+    if integer(state.get("version"), "state version") != 1:
+        raise ValueError("unsupported state version")
+    nonempty_string(state.get("mode"), "state mode")
+    deadline = parse_date(nonempty_string(state.get("deadline"), "state deadline"))
+    integer(state.get("minutes_per_day"), "state minutes_per_day", 1)
+    number(state.get("target_score"), "state target_score", 0, 100)
+    sources = validate_sources(state.get("sources"))
+    ready_sources = {source["path"] for source in sources if source["status"] == "ready"}
+    topics = validate_topics(state.get("topics"), ready_sources)
+    if not isinstance(state.get("sessions"), list):
+        raise ValueError("state sessions must be a list")
+    saved_plan = state.get("plan")
+    if (not isinstance(saved_plan, dict)
+            or {"as_of", "schedule", "backlog"} - saved_plan.keys()
+            or not isinstance(saved_plan["schedule"], list)
+            or not isinstance(saved_plan["backlog"], list)):
+        raise ValueError("state plan must include as_of, schedule, and backlog containers")
+    saved_as_of = saved_plan["as_of"]
+    if saved_as_of is not None and parse_date(nonempty_string(saved_as_of, "state plan as_of")) > deadline:
+        raise ValueError("state plan as_of must not be after deadline")
+    if as_of > deadline:
+        raise ValueError("as-of date must not be after deadline")
+    return topics, ready_sources
 
 
 def make_plan(state, topics, as_of):
@@ -204,9 +265,8 @@ def make_plan(state, topics, as_of):
 def plan(args):
     as_of = parse_date(args.as_of)
     state = load_json(args.state, "state")
-    if not isinstance(state, dict):
-        raise ValueError("state must be a JSON object")
-    topics = validate_topics(load_json(args.topics, "topics"))
+    _, ready_sources = validate_state(state, as_of)
+    topics = validate_topics(load_json(args.topics, "topics"), ready_sources)
     result = make_plan(state, topics, as_of)
     state["topics"] = topics
     state["plan"] = result
@@ -243,9 +303,7 @@ def validate_results(payload, topics):
 def record(args):
     as_of = parse_date(args.as_of)
     state = load_json(args.state, "state")
-    if not isinstance(state, dict):
-        raise ValueError("state must be a JSON object")
-    topics = validate_topics(state.get("topics"))
+    topics, ready_sources = validate_state(state, as_of)
     payload = load_json(args.results, "results")
     validate_results(payload, topics)
     by_id = {topic["id"]: topic for topic in topics}
@@ -255,10 +313,8 @@ def record(args):
         topic["mastery"] = (topic["mastery"] * old_attempts + item["correct"]) / (old_attempts + item["total"])
         topic["mastery_attempts"] = old_attempts + item["total"]
         topic["remaining_minutes"] -= item["minutes_spent"]
-    topics = validate_topics(topics)
-    sessions = state.get("sessions")
-    if not isinstance(sessions, list):
-        raise ValueError("state sessions must be a list")
+    topics = validate_topics(topics, ready_sources)
+    sessions = state["sessions"]
     result = make_plan(state, topics, as_of)
     state["topics"] = topics
     state["sessions"] = [*sessions, payload]
