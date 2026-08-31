@@ -1,0 +1,4 @@
+interface:
+  display_name: "Study Sprint Coach"
+  short_description: "Evidence-backed deadline learning plans"
+  default_prompt: "Use $study-sprint-coach to build an evidence-backed study sprint from my local materials."
