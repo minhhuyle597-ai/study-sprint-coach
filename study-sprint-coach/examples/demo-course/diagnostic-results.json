@@ -1,5 +1,5 @@
 {
-  "_notice": "合成、CC0/类公版演示内容；不是真实教师材料或历年试卷。",
+  "_notice": "Study Sprint Coach 原创合成演示内容，随本包按 MIT License 分发；不是真实教师材料或历年试卷。",
   "date": "2026-09-01",
   "items": [
     {"topic_id": "derivatives", "correct": 5, "total": 5, "minutes_spent": 60},

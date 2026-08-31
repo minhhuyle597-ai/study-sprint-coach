@@ -93,7 +93,7 @@ Two scripts are sufficient: one owns study state and planning; one reports the r
   "sources": [],
   "topics": [],
   "sessions": [],
-  "plan": []
+  "plan": {"as_of": null, "schedule": [], "backlog": []}
 }
 ```
 
@@ -173,4 +173,3 @@ State writes are atomic: write a sibling temporary file and replace the destinat
 - The output contract produces concise cited answers, detailed formula treatment, hidden quiz answers, and visible plan changes.
 - The Skill package validates and a fresh agent completes all three evaluation scenarios.
 - Documentation explains installation, reproduction, privacy, limitations, and the exact competition submission artifacts.
-

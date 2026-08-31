@@ -8,7 +8,7 @@ Study Sprint Coach 面向临近期末、认证或阶段验收的学习者：它�
 - `references/output-contract.md`：回答、讲解、计划、测验和复盘的固定输出合约。
 - `scripts/study_sprint.py`：标准库实现的初始化、排程、记录和原子写入。
 - `scripts/openvino_probe.py`：如实报告本机 OpenVINO 可用性与设备。
-- `examples/demo-course/`：明确标注为合成内容的可复现实例。
+- `examples/demo-course/`：Study Sprint Coach 原创合成演示内容，随本包按 MIT License 分发；不是真实教师材料或历年试卷。
 - `tests/` 与 `evaluations/`：行为测试及无 Skill 基线。
 
 ## 前置条件
@@ -22,6 +22,12 @@ Study Sprint Coach 面向临近期末、认证或阶段验收的学习者：它�
 将整个 `study-sprint-coach` 目录复制到 Agent 工具共用的 Skills 目录，例如 Windows 的 `%USERPROFILE%\.agents\skills\study-sprint-coach`，然后按所用 Agent 的 Skill 刷新方式重新加载。不要只复制 `SKILL.md`，因为脚本、引用、示例和测试共同构成可复现包。
 
 发布到 ModelScope 时，以本目录为 Skill 包根目录；提交前保留 `SKILL.md`、`README.md`、`LICENSE`、`agents/`、`references/`、`scripts/`、`examples/`、`tests/` 和 `evaluations/`。发布动作及页面元数据需在用户自己的 ModelScope 账号中完成，本仓库不会自动上传材料。
+
+从 Git 仓库打包时只归档已跟踪文件，忽略的缓存不会进入压缩包：
+
+```powershell
+git archive --format=zip --output study-sprint-coach.zip HEAD:study-sprint-coach
+```
 
 ## 可复现演示
 
@@ -73,4 +79,4 @@ OpenVINO 探测所依据的官方资料：
 python -m unittest discover -s study-sprint-coach/tests -v
 ```
 
-Task 4 报告记录的当前基线为 10 个测试全部通过；文档变更后应再次运行上述命令，以最新输出为准。
+当前完整套件为 15 个测试全部通过；文档变更后应再次运行上述命令，以最新输出为准。

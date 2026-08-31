@@ -66,7 +66,7 @@ priority_i = relevance_i * (1 - mastery_i) * score_gain_i / minutes_i
 
 ## 8. 合成端到端演示：测验前后计划如何改变
 
-下面的虚构大学微积分材料均标注为合成、CC0/类公版演示内容，不是真实教师材料或历年试卷。在包根目录运行：
+下面的虚构大学微积分材料是 Study Sprint Coach 原创合成演示内容，随本包按 MIT License 分发；不是真实教师材料或历年试卷。在包根目录运行：
 
 ```powershell
 $demoRoot = Join-Path ([System.IO.Path]::GetTempPath()) "study-sprint-coach-demo"
@@ -87,7 +87,7 @@ new_mastery = (old_mastery * old_attempts + correct) / (old_attempts + total)
 
 ## 9. TDD 证据：从失败到最小通过
 
-Task 3 报告记录了 `init`、`plan`、`record` 的 RED-GREEN 过程：对应阶段先出现预期失败，再分别达到 2、4、6 个测试通过；非有限数修复先复现 `NaN` 和 `Infinity` 被错误接受，再以聚焦回归通过，最终完整套件为 7 个测试通过。Task 4 为 OpenVINO 探测新增 3 个测试，先因脚本缺失而失败，最终完整套件为 10 个测试通过（`Ran 10 tests`，`OK`）。本文档/demo 完成后仍以仓库中重新运行的完整测试结果为准。
+Task 3 报告记录了 `init`、`plan`、`record` 的 RED-GREEN 过程：对应阶段先出现预期失败，再分别达到 2、4、6 个测试通过；非有限数修复先复现 `NaN` 和 `Infinity` 被错误接受，再以聚焦回归通过，最终完整套件为 7 个测试通过。Task 4 为 OpenVINO 探测新增 3 个测试，先因脚本缺失而失败。最终统一修复新增来源、状态、日期与探测子进程回归，当前完整套件为 15 个测试通过（`Ran 15 tests`，`OK`）。历史 Task 报告保留各阶段当时的测试数。
 
 从仓库根目录复现：
 
@@ -117,7 +117,7 @@ Task 4 在当前本机运行 `python scripts/openvino_probe.py` 的实际结果�
 
 待实测填写：最终采用的 Agent 工具名称与精确版本。
 
-截图/录屏镜头清单：Skill 目录与加载状态；合成材料声明；初始化来源清单；初始计划与 `limits` 30 分钟积压；`record` 前后掌握度；更新后 `integrals` 位于首位；10 个测试的最新完整输出；OpenVINO 实际探测输出；隐私与学术诚信提示；ModelScope Skill 页面和 Learn 文章页面。
+截图/录屏镜头清单：Skill 目录与加载状态；合成材料声明；初始化来源清单；初始计划与 `limits` 30 分钟积压；`record` 前后掌握度；更新后 `integrals` 位于首位；15 个测试的最新完整输出；OpenVINO 实际探测输出；隐私与学术诚信提示；ModelScope Skill 页面和 Learn 文章页面。
 
 待实测填写：上述截图文件、录屏文件及其公开链接。
 

@@ -1,6 +1,6 @@
 ---
 name: study-sprint-coach
-description: Use when a learner supplies study materials, a concept or formula, diagnostic answers or results, or prior study state and asks for an explanation, quiz or review, deadline-based plan, or adaptive replanning.
+description: Use when a learner supplies study materials, a concept or formula, diagnostic answers or results, or prior study state and asks for an explanation, quiz or review, deadline-based plan, or adaptive replanning for exams, certification, onboarding, project ramp-up, or presentation preparation.
 ---
 
 # Study Sprint Coach

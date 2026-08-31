@@ -13,7 +13,7 @@
       {"source": "past-exam.md", "locator": "2024模拟卷 Q2"}
     ],
     "mastery_check": "5题至少4题正确",
-    "content_notice": "合成、CC0/类公版演示内容；不是真实教师材料或历年试卷。"
+    "content_notice": "Study Sprint Coach 原创合成演示内容，随本包按 MIT License 分发；不是真实教师材料或历年试卷。"
   },
   {
     "id": "integrals",
@@ -29,7 +29,7 @@
       {"source": "past-exam.md", "locator": "2024模拟卷 Q3"}
     ],
     "mastery_check": "5题至少4题正确",
-    "content_notice": "合成、CC0/类公版演示内容；不是真实教师材料或历年试卷。"
+    "content_notice": "Study Sprint Coach 原创合成演示内容，随本包按 MIT License 分发；不是真实教师材料或历年试卷。"
   },
   {
     "id": "limits",
@@ -45,6 +45,6 @@
       {"source": "past-exam.md", "locator": "2024模拟卷 Q1"}
     ],
     "mastery_check": "3题至少2题正确",
-    "content_notice": "合成、CC0/类公版演示内容；不是真实教师材料或历年试卷。"
+    "content_notice": "Study Sprint Coach 原创合成演示内容，随本包按 MIT License 分发；不是真实教师材料或历年试卷。"
   }
 ]
