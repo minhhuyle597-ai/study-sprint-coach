@@ -1,0 +1,6 @@
+.superpowers/
+**/__pycache__/
+*.pyc
+study_state.json
+任务要求.png
+提交表单.png
