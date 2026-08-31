@@ -1,4 +1,5 @@
 import hashlib
+import importlib.util
 import json
 import subprocess
 import sys
@@ -8,6 +9,8 @@ from pathlib import Path
 
 
 SCRIPT = Path(__file__).parents[1] / "scripts" / "study_sprint.py"
+OPENVINO_PROBE = Path(__file__).parents[1] / "scripts" / "openvino_probe.py"
+OPENVINO_DEVICE_SOURCE = "https://docs.openvino.ai/nightly/openvino-workflow/running-inference/inference-devices-and-modes/query-device-properties.html"
 
 
 class StudySprintCliTests(unittest.TestCase):
@@ -217,6 +220,51 @@ class StudySprintCliTests(unittest.TestCase):
                 )
                 self.assertNotEqual(result.returncode, 0)
                 self.assertEqual(state.read_bytes(), before)
+
+
+class OpenVinoProbeTests(unittest.TestCase):
+    def load_probe(self):
+        spec = importlib.util.spec_from_file_location("openvino_probe", OPENVINO_PROBE)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return module
+
+    def test_probe_reports_sorted_devices_for_available_openvino(self):
+        class FakeOpenVino:
+            __version__ = "2026.0"
+
+            class Core:
+                available_devices = ["GPU", "CPU"]
+
+        result = self.load_probe().probe_openvino(lambda name: FakeOpenVino)
+
+        self.assertEqual(result, {
+            "available": True,
+            "version": "2026.0",
+            "devices": ["CPU", "GPU"],
+            "source": OPENVINO_DEVICE_SOURCE,
+        })
+
+    def test_probe_reports_missing_openvino_without_claiming_acceleration(self):
+        def missing_importer(name):
+            raise ModuleNotFoundError("No module named 'openvino'")
+
+        result = self.load_probe().probe_openvino(missing_importer)
+
+        self.assertFalse(result["available"])
+        self.assertTrue(result["error"].startswith("ModuleNotFoundError:"))
+        self.assertIn("Do not claim CPU/GPU/NPU acceleration until devices are listed.", result["next_action"])
+
+    def test_probe_reports_runtime_discovery_failure_without_propagating(self):
+        class FailingOpenVino:
+            @staticmethod
+            def Core():
+                raise RuntimeError("plugin discovery failed")
+
+        result = self.load_probe().probe_openvino(lambda name: FailingOpenVino)
+
+        self.assertFalse(result["available"])
+        self.assertEqual(result["error"], "RuntimeError: plugin discovery failed")
 
 
 if __name__ == "__main__":
